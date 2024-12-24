@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Button } from 'react-native';
+import { View, StyleSheet, Button, Text } from 'react-native';
 import SensorDataDisplay from '../tracking/components/SensorDataDisplay';
 import StartStopButton from '../tracking/components/StartStopButton';
 import { useSensorTracking } from '../tracking/hooks/useSensorTracking';
@@ -16,6 +16,7 @@ const TrackingScreen = () => {
     processFileForMetrics,
     cleanDb,
     metrics,
+    elapsedTime, // Importar el temporizador desde el hook
   } = useSensorTracking();
 
   const router = useRouter();
@@ -35,14 +36,17 @@ const TrackingScreen = () => {
           location={location}
           accelerometerData={accelerometerData}
           gyroscopeData={gyroscopeData}
+          elapsedTime={elapsedTime}
         />
       </View>
+
       <StartStopButton
         isTracking={isTracking}
         onStart={startTracking}
         onStop={stopTracking}
         onClean={cleanDb}
       />
+
       <View style={styles.buttonContainer}>
         <Button title="View Dashboard" onPress={navigateToDashboard} />
       </View>

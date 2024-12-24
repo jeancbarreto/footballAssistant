@@ -16,16 +16,32 @@ type SensorDataDisplayProps = {
     y?: number;
     z?: number;
   } | null;
+  elapsedTime: number;
+
 };
+
+  // Formatear el tiempo transcurrido en hh:mm:ss
+  const formatElapsedTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
 
 const SensorDataDisplay: React.FC<SensorDataDisplayProps> = ({
   location,
   accelerometerData,
   gyroscopeData,
+  elapsedTime
 }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Sensor Data</Text>
+
+      <Text style={styles.timer}>
+        {`Session Time: ${formatElapsedTime(elapsedTime)}` }
+     </Text>
 
       <View style={styles.dataContainer}>
         <Text style={styles.label}>GPS:</Text>
@@ -91,6 +107,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: 'blue',
+  },
+  timer: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
   },
 });
 

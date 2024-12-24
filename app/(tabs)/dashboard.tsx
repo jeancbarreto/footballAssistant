@@ -40,6 +40,15 @@ const Dashboard = () => {
 
         <Text style={styles.label}>Max Speed:</Text>
         <Text style={styles.value}>{metrics.maxSpeed.toFixed(2)} km/h</Text>
+
+        <Text style={styles.label}>Session Time:</Text>
+        <Text style={styles.value}>{(metrics.sessionTime / 60).toFixed(2)} min</Text>
+
+        <Text style={styles.label}>Calories Burned:</Text>
+        <Text style={styles.value}>{metrics.caloriesBurned.toFixed(2)} kcal</Text>
+
+        <Text style={styles.label}>Abrupt Movements:</Text>
+        <Text style={styles.value}>{metrics.abruptMovements}</Text>
       </View>
 
       {/* Heatmap */}
