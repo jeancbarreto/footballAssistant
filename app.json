@@ -18,6 +18,11 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAxe-pzJ4u3fiF6nAq-5Oip4L78vv0fw8Y"
+        }
+      },
       "package": "com.jeancbarreto24.footballassistant"
     },
     "web": {
@@ -45,6 +50,7 @@
       "router": {
         "origin": false
       },
+      "googleMapsApiKey": "AIzaSyAxe-pzJ4u3fiF6nAq-5Oip4L78vv0fw8Y",
       "eas": {
         "projectId": "fb4389ee-4a27-4eda-9ad1-acb3b6dd2384"
       }
