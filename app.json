@@ -2,11 +2,13 @@
   "expo": {
     "name": "football-assistant",
     "slug": "football-assistant",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
+    "jsEngine": "hermes",
     "userInterfaceStyle": "automatic",
+    "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
