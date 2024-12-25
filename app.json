@@ -20,7 +20,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyAxe-pzJ4u3fiF6nAq-5Oip4L78vv0fw8Y"
+          "apiKey": "${GOOGLE_API_KEY}"
         }
       },
       "package": "com.jeancbarreto24.footballassistant"
@@ -50,7 +50,7 @@
       "router": {
         "origin": false
       },
-      "googleMapsApiKey": "AIzaSyAxe-pzJ4u3fiF6nAq-5Oip4L78vv0fw8Y",
+      "googleMapsApiKey": "${GOOGLE_API_KEY}",
       "eas": {
         "projectId": "fb4389ee-4a27-4eda-9ad1-acb3b6dd2384"
       }
