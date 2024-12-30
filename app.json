@@ -8,7 +8,10 @@
     "scheme": "myapp",
     "jsEngine": "hermes",
     "userInterfaceStyle": "automatic",
-    "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+    "permissions": [
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION"
+    ],
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
@@ -41,7 +44,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true
