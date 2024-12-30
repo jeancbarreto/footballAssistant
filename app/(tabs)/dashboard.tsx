@@ -64,10 +64,10 @@ const Dashboard = () => {
               points={metrics.heatmap.map((point) => ({
                 latitude: point.latitude,
                 longitude: point.longitude,
-                weight: 1, // Puedes ajustar el peso de cada punto
+                weight: 1,
               }))}
-              radius={50} // Ajusta el radio del Heatmap
-              opacity={0.6} // Ajusta la opacidad del Heatmap
+              radius={50}
+              opacity={0.6}
               gradient={{
                 colors: ['#00FF00', '#FFFF00', '#FF0000'], // Verde → Amarillo → Rojo
                 startPoints: [0.2, 0.5, 1.0],
