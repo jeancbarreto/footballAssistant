@@ -16,8 +16,15 @@ export default ({ config }) => ({
     ],
     newArchEnabled: true,
     ios: {
-      supportsTablet: true,
-    },
+        config: {
+          googleMapsApiKey: process.env.GOOGLE_IOS_API_KEY,
+        },
+        infoPlist: {
+          NSLocationWhenInUseUsageDescription: "This app needs access to your location to display maps and provide accurate tracking.",
+          NSLocationAlwaysUsageDescription: "This app needs access to your location in the background to track your activities.",
+          NSLocationAlwaysAndWhenInUseUsageDescription: "This app needs access to your location to provide seamless tracking.",
+        },
+      },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/sportiq-app-bg.png",
