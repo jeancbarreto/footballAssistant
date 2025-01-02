@@ -4,6 +4,8 @@ import SensorDataDisplay from '../tracking/components/SensorDataDisplay';
 import StartStopButton from '../tracking/components/StartStopButton';
 import { useSensorTracking } from '../tracking/hooks/useSensorTracking';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 const TrackingScreen = () => {
   const {
@@ -16,41 +18,50 @@ const TrackingScreen = () => {
     processFileForMetrics,
     cleanDb,
     metrics,
-    elapsedTime, // Importar el temporizador desde el hook
+    elapsedTime,
   } = useSensorTracking();
+
+  const insets = useSafeAreaInsets();
 
   const router = useRouter();
 
   const navigateToDashboard = async () => {
     await processFileForMetrics();
     router.push({
-      pathname: '/dashboard',
-      params: { metrics: JSON.stringify(metrics) }, // Pasar metrics como string
+      pathname: './views/dashboard',
+      params: { metrics: JSON.stringify(metrics) },
     });
   };
 
+  const styleNew = {
+    ...styles.container,
+    paddingTop: insets.top,
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={styles.dataContainer}>
-        <SensorDataDisplay
-          location={location}
-          accelerometerData={accelerometerData}
-          gyroscopeData={gyroscopeData}
-          elapsedTime={elapsedTime}
-        />
-      </View>
+    <><StatusBar
+      animated={true} style='dark' />
+      <View style={styleNew}>
 
-      <StartStopButton
-        isTracking={isTracking}
-        onStart={startTracking}
-        onStop={stopTracking}
-        onClean={cleanDb}
-      />
+        <View style={styles.dataContainer}>
+          <SensorDataDisplay
+            location={location}
+            accelerometerData={accelerometerData}
+            gyroscopeData={gyroscopeData}
+            elapsedTime={elapsedTime} />
+        </View>
 
-      <View style={styles.buttonContainer}>
-        <Button title="View Dashboard" onPress={navigateToDashboard} />
-      </View>
-    </View>
+        <StartStopButton
+          isTracking={isTracking}
+          onStart={startTracking}
+          onStop={stopTracking}
+          onClean={cleanDb} />
+
+
+        <View style={styles.buttonContainer}>
+          <Button title="View Dashboard" onPress={navigateToDashboard} disabled={isTracking} />
+        </View>
+      </View></>
   );
 };
 

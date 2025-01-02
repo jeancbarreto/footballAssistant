@@ -58,9 +58,10 @@ export const useSensorTracking = () => {
 
       return () => clearInterval(interval);
     } else {
-      setElapsedTime(0); // Reiniciar el temporizador cuando no se está rastreando
+      setElapsedTime(0); 
     }
   }, [isTracking, startTime]);
+  
 
   // Fórmula básica para calcular calorías quemadas
   const calculateCalories = (distance: number): number => {
@@ -246,7 +247,6 @@ export const useSensorTracking = () => {
       const averageSpeed = gpsData.length > 1 ? (totalDistance / gpsData.length) * 3.6 : 0;
       maxSpeed *= 3.6;
 
-      const sessionTime = startTime ? (Date.now() - startTime) / 1000 : 0;
       const caloriesBurned = calculateCalories(totalDistance);
 
       setMetrics({
@@ -254,7 +254,7 @@ export const useSensorTracking = () => {
         averageSpeed,
         maxSpeed,
         heatmap: gpsData,
-        sessionTime,
+        sessionTime: elapsedTime,
         caloriesBurned,
         abruptMovements,
       });
@@ -278,7 +278,7 @@ export const useSensorTracking = () => {
     accelerometerData,
     gyroscopeData,
     metrics,
-    elapsedTime, // Exponer el temporizador
+    elapsedTime,
     startTracking,
     stopTracking,
     cleanDb,
