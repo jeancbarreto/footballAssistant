@@ -18,6 +18,7 @@ type Metrics = {
   sessionTime: number; // En segundos
   caloriesBurned: number; // En kcal
   abruptMovements: number; // Cantidad de movimientos bruscos
+  distanceHistory: number[]; // Distancia acumulada en intervalos
 };
 
 export const useSensorTracking = () => {
@@ -35,6 +36,7 @@ export const useSensorTracking = () => {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0); // Estado del temporizador
   const [abruptMovements, setAbruptMovements] = useState(0);
+  const [distanceHistory, setDistanceHistory] = useState<number[]>([]);
 
   // Inicializar la base de datos al montar el hook
   useEffect(() => {
@@ -67,6 +69,30 @@ export const useSensorTracking = () => {
   const calculateCalories = (distance: number): number => {
     return (distance / 1000) * 60; // 60 kcal por kilómetro recorrido
   };
+
+  const calculateDistance = (
+    point1: { latitude: number; longitude: number },
+    point2: { latitude: number; longitude: number }
+  ): number => {
+    if (!point1 || !point2) return 0;
+  
+    const R = 6371000; // Radio de la Tierra en metros
+    const toRad = (value: number) => (value * Math.PI) / 180;
+  
+    const dLat = toRad(point2.latitude - point1.latitude);
+    const dLon = toRad(point2.longitude - point1.longitude);
+  
+    const lat1 = toRad(point1.latitude);
+    const lat2 = toRad(point2.latitude);
+  
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  
+    return R * c; // Distancia en metros
+  };
+  
 
   // Detecta movimientos bruscos basados en cambios en el acelerómetro
   const detectAbruptMovement = (current: SensorData, previous: SensorData | null): boolean => {
@@ -117,7 +143,7 @@ export const useSensorTracking = () => {
 
     // GPS Listener
     const locSub = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.Highest, timeInterval: 200 },
+      { accuracy: Location.Accuracy.Highest, timeInterval: 1000 },
       async (newLocation) => {
         setLocation(newLocation.coords);
         const timestamp = new Date().toISOString();
@@ -192,6 +218,7 @@ export const useSensorTracking = () => {
       setAccelerometerData(null);
       setGyroscopeData(null);
       setElapsedTime(0); // Reiniciar el temporizador
+      setDistanceHistory([]);
     } catch (error) {
       console.error('Error stopping tracking:', error);
     }
@@ -210,14 +237,15 @@ export const useSensorTracking = () => {
     try {
       const rows = await getAllData(db);
 
-      const gpsData: { latitude: number; longitude: number }[] = [];
+      const gpsData: { latitude: number; longitude: number; timestamp: string }[] = [];
       let totalDistance = 0;
       let maxSpeed = 0;
+      let totalTimeInSeconds = 0;
 
       rows.forEach((row) => {
-        const { latitude, longitude } = row.value;
-        if (latitude !== null && longitude !== null) {
-          gpsData.push({ latitude, longitude });
+        const { latitude, longitude, timestamp } = row.value;
+        if (latitude !== null && longitude !== null && timestamp) {
+          gpsData.push({ latitude, longitude, timestamp });
         }
       });
 
@@ -238,13 +266,25 @@ export const useSensorTracking = () => {
             const distance = R * c;
             totalDistance += distance;
 
-            const speed = distance / 1;
-            if (speed > maxSpeed) maxSpeed = speed;
+            const timeInterval =
+              (new Date(current.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 1000; // en segundos
+
+              const speed = timeInterval > 0 ? (distance / timeInterval) * 3.6 : 0;
+              const filteredSpeed = speed > 30 ? maxSpeed : speed;
+
+              if (filteredSpeed > maxSpeed) maxSpeed = filteredSpeed;
+
+            totalTimeInSeconds += timeInterval;
+            if (speed <= 30) {
+              totalDistance += distance;
+              distanceHistory.push(totalDistance/1000);
+            }
           }
         });
       }
 
-      const averageSpeed = gpsData.length > 1 ? (totalDistance / gpsData.length) * 3.6 : 0;
+      const totalTimeInHours = totalTimeInSeconds / 3600
+      const averageSpeed = totalTimeInHours > 0 ? (totalDistance / 1000) / totalTimeInHours : 0;
       maxSpeed *= 3.6;
 
       const caloriesBurned = calculateCalories(totalDistance);
@@ -253,10 +293,11 @@ export const useSensorTracking = () => {
         distance: totalDistance,
         averageSpeed,
         maxSpeed,
-        heatmap: gpsData,
-        sessionTime: elapsedTime,
+        heatmap: gpsData.map(({ latitude, longitude }) => ({ latitude, longitude })),
+        sessionTime: totalTimeInSeconds,
         caloriesBurned,
         abruptMovements,
+        distanceHistory
       });
     } catch (error) {
       console.error('Error processing metrics:', error);
@@ -269,7 +310,8 @@ export const useSensorTracking = () => {
       return;
     }
 
-    await clearDatabase(db);
+    await clearDatabase(db).then(res => alert("limpieza completa!"));
+
   };
 
   return {

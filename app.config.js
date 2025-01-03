@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 export default ({ config }) => ({
   expo: {
-    name: "football-assistant",
+    name: "sport-IQ",
     slug: "football-assistant",
     version: "1.1.0",
     orientation: "portrait",
@@ -47,7 +47,7 @@ export default ({ config }) => ({
       [
         "expo-splash-screen",
         {
-          image: "./assets/images/splash-icon.png",
+          image: "./assets/images/sportiq-app.png",
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#4d7aae",
@@ -55,6 +55,7 @@ export default ({ config }) => ({
       ],
       "expo-sqlite",
       "expo-build-properties",
+      "expo-secure-store",
     ],
     experiments: {
       typedRoutes: true,

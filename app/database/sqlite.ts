@@ -40,7 +40,9 @@ export const deleteData = async (db: SQLite.SQLiteDatabase, key: string) => {
 };
 
 // Obtiene todos los datos como una lista
-export const getAllData = async (db: SQLite.SQLiteDatabase): Promise<{ key: string; value: any }[]> => {
+export const getAllData = async (db: SQLite.SQLiteDatabase): Promise<{
+  [x: string]: string | number | Date; key: string; value: any 
+}[]> => {
   const rows = await db.getAllAsync<{ key: string; value: string }>('SELECT key, value FROM json_store');
   return rows.map(row => ({ key: row.key, value: JSON.parse(row.value) }));
 };
