@@ -7,7 +7,12 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "target": "es5",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react"
   },
   "include": [
     "**/*.ts",

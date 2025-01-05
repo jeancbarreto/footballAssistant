@@ -1,16 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import MapView, { Heatmap, PROVIDER_GOOGLE } from 'react-native-maps';
 import { LineChart } from 'react-native-chart-kit';
 import { useSensorTracking } from '../../tracking/hooks/useSensorTracking';
+import { TimerContext } from '@/app/contexts/timerContext';
+import utilTimer from '../../utils/timer';
 
 const Dashboard = () => {
   const { metrics, processFileForMetrics } = useSensorTracking();
+  const timerContext = useContext(TimerContext);
+  const { timeConsumed } = timerContext ?? {};
+
+  console.log(timeConsumed)
 
   useEffect(() => {
     processFileForMetrics();
   }, []);
-
 
   if (!metrics) {
     return (
@@ -77,7 +82,7 @@ const Dashboard = () => {
       <View style={styles.metricsContainer}>
         <CircularCard value={metrics.averageSpeed.toFixed(1)} label="Velocidad Prom. (km/h)" color="#00FF7F" />
         <CircularCard value={metrics.maxSpeed.toFixed(1)} label="Velocidad Máx. (km/h)" color="#FF4500" />
-        <CircularCard value={metrics.sessionTime.toFixed(1)} label={metrics.sessionTime > 60 ? "Tiempo Sesión (min)" : "Tiempo Sesión (Seg)"} color="#FFA500" />
+        <CircularCard value={utilTimer.FormatElapsedTime(timeConsumed ?? 0)} label={timeConsumed && timeConsumed > 60 ? "Tiempo Sesión (min)" : "Tiempo Sesión (Seg)"} color="#FFA500" />
       </View>
       <View style={styles.metricsContainer}>
         <CircularCard value={metrics.caloriesBurned.toFixed(1)} label="Calorías (kcal)" color="#4B0082" />

@@ -1,32 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, StyleSheet, Button, Text, FlatList } from 'react-native';
 import { useSensorTracking } from '../tracking/hooks/useSensorTracking';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import utilTimer from '../utils/timer';
 import Svg, { Circle } from 'react-native-svg';
+import { TimerContext } from '../contexts/timerContext';
 
 const TrackingScreen = () => {
   const {
-    isTracking,
-    startTracking,
-    stopTracking,
     cleanDb,
-    elapsedTime,
+    stopTracking,
+    startTracking
   } = useSensorTracking();
 
-  const [laps, setLaps] = useState<{ id: string; label: string; time: string }[]>([]);
+  const timerContext = useContext(TimerContext);
+  const { elapsedTime, isRunning: isTracking, startTimer, stopTimer, resetTimer } = timerContext ?? {}; 
 
+  const [laps, setLaps] = useState<{ id: string; label: string; time: string }[]>([]);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const formatElapsedTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
-
   const registerLap = () => {
-    const newLapTime = formatElapsedTime(elapsedTime);
+    const newLapTime = utilTimer.FormatElapsedTime(elapsedTime ?? 0);
     setLaps((prevLaps) => [
       ...prevLaps,
       {
@@ -37,14 +33,28 @@ const TrackingScreen = () => {
     ]);
   };
 
+
+  const handleStartTracking = () => {
+    if (startTimer) {
+      startTimer();
+      startTracking();
+    }
+  }
+
   const handleStopTracking = () => {
     registerLap(); // Registrar el lap automáticamente
-    stopTracking(); // Llamar a la función para detener el tracking
+    if (stopTimer) {
+      stopTimer(); // Llamar a la función para detener el tracking
+      stopTracking();
+    }
   };
 
   const handleClean = () => {
     cleanDb()
     setLaps([])
+    if (resetTimer) {
+      resetTimer();
+    }
   }
 
   const navigateToDashboard = async () => {
@@ -54,7 +64,7 @@ const TrackingScreen = () => {
     });
   };
 
-  const progress = (elapsedTime % 60) / 60; // Progreso en el círculo (0-1)
+  const progress = ((elapsedTime ?? 0) % 60) / 60; // Progreso en el círculo (0-1)
 
   const stylesFound = {
     ...styles.container, 
@@ -87,7 +97,7 @@ const TrackingScreen = () => {
             origin="100,100"
           />
         </Svg>
-        <Text style={styles.timerText}>{formatElapsedTime(elapsedTime)}</Text>
+        <Text style={styles.timerText}>{utilTimer.FormatElapsedTime(elapsedTime ?? 0)}</Text>
       </View>
 
       {/* Lap List */}
@@ -105,7 +115,7 @@ const TrackingScreen = () => {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <Button title="Start" onPress={startTracking} disabled={isTracking} />
+        <Button title="Start" onPress={handleStartTracking} disabled={isTracking} />
         <Button title="Stop" onPress={handleStopTracking} disabled={!isTracking} />
         <Button title="Clean DB" onPress={handleClean} disabled={isTracking} />
         <Button title="View Dashboard" onPress={navigateToDashboard} disabled={isTracking} />

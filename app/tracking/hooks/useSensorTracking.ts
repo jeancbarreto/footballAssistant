@@ -1,8 +1,9 @@
 import * as SQLite from 'expo-sqlite';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as Location from 'expo-location';
 import { Accelerometer, Gyroscope } from 'expo-sensors';
 import { openDatabase, initializeDatabase, saveData, getAllData, clearDatabase } from '../../database/sqlite';
+import { KalmanFilter } from '../../utils/KalmanFilter';
 
 type SensorData = {
   x: number;
@@ -21,6 +22,8 @@ type Metrics = {
   distanceHistory: number[]; // Distancia acumulada en intervalos
 };
 
+const timeInterval = 1500; // Intervalo de tiempo para la actualización de la ubicación
+
 export const useSensorTracking = () => {
   const [isTracking, setIsTracking] = useState(false);
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
@@ -33,10 +36,22 @@ export const useSensorTracking = () => {
   const [gyroscopeSubscription, setGyroscopeSubscription] = useState<ReturnType<typeof Gyroscope.addListener> | null>(null);
 
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
-  const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0); // Estado del temporizador
-  const [abruptMovements, setAbruptMovements] = useState(0);
   const [distanceHistory, setDistanceHistory] = useState<number[]>([]);
+
+const [sensorDataBuffer, setSensorDataBuffer] = useState<{
+  latitude: number | null;
+  longitude: number | null;
+  accelerometer: SensorData | null;
+  gyroscope: SensorData | null;
+  timestamp: string | null;
+}>({
+  latitude: null,
+  longitude: null,
+  accelerometer: null,
+  gyroscope: null,
+  timestamp: null,
+});
 
   // Inicializar la base de datos al montar el hook
   useEffect(() => {
@@ -51,48 +66,25 @@ export const useSensorTracking = () => {
     })();
   }, []);
 
-  // Actualizar el temporizador cada segundo
   useEffect(() => {
-    if (isTracking && startTime) {
-      const interval = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
-      }, 1000);
-
-      return () => clearInterval(interval);
-    } else {
-      setElapsedTime(0); 
-    }
-  }, [isTracking, startTime]);
+    (async () => {
+    const {timestamp, latitude, longitude, gyroscope, accelerometer} = sensorDataBuffer;
+    if (timestamp && latitude && longitude && gyroscope && accelerometer) {
+      insertSensorData(
+        sensorDataBuffer.timestamp!,
+        sensorDataBuffer.latitude,
+        sensorDataBuffer.longitude,
+        sensorDataBuffer.accelerometer,
+        sensorDataBuffer.gyroscope
+      );
+  }}) ();
+  }, [sensorDataBuffer]);
   
 
   // Fórmula básica para calcular calorías quemadas
   const calculateCalories = (distance: number): number => {
     return (distance / 1000) * 60; // 60 kcal por kilómetro recorrido
   };
-
-  const calculateDistance = (
-    point1: { latitude: number; longitude: number },
-    point2: { latitude: number; longitude: number }
-  ): number => {
-    if (!point1 || !point2) return 0;
-  
-    const R = 6371000; // Radio de la Tierra en metros
-    const toRad = (value: number) => (value * Math.PI) / 180;
-  
-    const dLat = toRad(point2.latitude - point1.latitude);
-    const dLon = toRad(point2.longitude - point1.longitude);
-  
-    const lat1 = toRad(point1.latitude);
-    const lat2 = toRad(point2.latitude);
-  
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  
-    return R * c; // Distancia en metros
-  };
-  
 
   // Detecta movimientos bruscos basados en cambios en el acelerómetro
   const detectAbruptMovement = (current: SensorData, previous: SensorData | null): boolean => {
@@ -139,61 +131,62 @@ export const useSensorTracking = () => {
       return;
     }
 
-    setStartTime(Date.now());
-
     // GPS Listener
     const locSub = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.Highest, timeInterval: 1000 },
+      { accuracy: Location.Accuracy.Highest, timeInterval: timeInterval, distanceInterval: 0.5 },
       async (newLocation) => {
         setLocation(newLocation.coords);
         const timestamp = new Date().toISOString();
-        await insertSensorData(
-          timestamp,
-          newLocation.coords.latitude,
-          newLocation.coords.longitude,
-          accelerometerData,
-          gyroscopeData
-        );
+        setSensorDataBuffer((prev) => ({
+          ...prev,
+          latitude: newLocation.coords.latitude,
+          longitude: newLocation.coords.longitude,
+          timestamp: timestamp,
+        }));
       }
     );
     setLocationSubscription(locSub);
 
     // Accelerometer Listener
     let previousAccel: SensorData | null = null;
+    Accelerometer.setUpdateInterval(timeInterval);
     const accelSub = Accelerometer.addListener((data) => {
       setAccelerometerData(data);
       const timestamp = new Date().toISOString();
-
-      if (previousAccel && detectAbruptMovement(data, previousAccel)) {
-        setAbruptMovements((prev) => prev + 1);
-      }
       previousAccel = data;
 
-      insertSensorData(
-        timestamp,
-        location?.latitude || null,
-        location?.longitude || null,
-        data,
-        gyroscopeData
-      );
+      setSensorDataBuffer((prev) => ({
+        ...prev,
+        accelerometer:data,
+        timestamp: timestamp,
+      }));
     });
     setAccelerometerSubscription(accelSub);
 
     // Gyroscope Listener
+    Gyroscope.setUpdateInterval(timeInterval);
     const gyroSub = Gyroscope.addListener((data) => {
       setGyroscopeData(data);
       const timestamp = new Date().toISOString();
-      insertSensorData(
-        timestamp,
-        location?.latitude || null,
-        location?.longitude || null,
-        accelerometerData,
-        data
-      );
+      setSensorDataBuffer((prev) => ({
+        ...prev,
+        gyroscope: data ,
+        timestamp: timestamp,
+      }));
     });
     setGyroscopeSubscription(gyroSub);
 
     setIsTracking(true);
+
+    if (sensorDataBuffer.timestamp) {
+      await insertSensorData(
+        sensorDataBuffer.timestamp,
+        sensorDataBuffer.latitude,
+        sensorDataBuffer.longitude,
+        sensorDataBuffer.accelerometer,
+        sensorDataBuffer.gyroscope
+      );
+    }
   };
 
   const stopTracking = async () => {
@@ -241,11 +234,25 @@ export const useSensorTracking = () => {
       let totalDistance = 0;
       let maxSpeed = 0;
       let totalTimeInSeconds = 0;
+      const maxSpeedThreshold = 30;
+      let caloriesBurned = 0;
+      let abruptMovements = 0;
+      let previousAccel: SensorData | null = null;
 
       rows.forEach((row) => {
-        const { latitude, longitude, timestamp } = row.value;
+        const { latitude, longitude, timestamp, accelerometer  } = row.value;
         if (latitude !== null && longitude !== null && timestamp) {
           gpsData.push({ latitude, longitude, timestamp });
+        }
+
+        if (accelerometer) {
+          if (
+            previousAccel &&
+            detectAbruptMovement(accelerometer, previousAccel)
+          ) {
+            abruptMovements += 1; // Incrementar el contador si se detecta un movimiento abrupto
+          }
+          previousAccel = accelerometer; // Actualizar el último dato del acelerómetro
         }
       });
 
@@ -264,20 +271,30 @@ export const useSensorTracking = () => {
               Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             const distance = R * c;
-            totalDistance += distance;
 
-            const timeInterval =
+            if (distance > 0) {
+              const timeInterval =
               (new Date(current.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 1000; // en segundos
 
               const speed = timeInterval > 0 ? (distance / timeInterval) * 3.6 : 0;
-              const filteredSpeed = speed > 30 ? maxSpeed : speed;
+              if (speed > 0 && speed <= maxSpeedThreshold) {
+                maxSpeed = Math.max(maxSpeed, speed);
+              }
 
-              if (filteredSpeed > maxSpeed) maxSpeed = filteredSpeed;
+              totalTimeInSeconds += timeInterval;
+              if (speed <= maxSpeedThreshold) {
+                totalDistance += distance;
 
-            totalTimeInSeconds += timeInterval;
-            if (speed <= 30) {
-              totalDistance += distance;
-              distanceHistory.push(totalDistance/1000);
+                if (
+                  current.latitude !== prev.latitude || 
+                  current.longitude !== prev.longitude
+                ) {
+                  distanceHistory.push(totalDistance / 1000);
+                }
+              }
+
+              caloriesBurned += calculateCalories(totalDistance);
+
             }
           }
         });
@@ -285,16 +302,22 @@ export const useSensorTracking = () => {
 
       const totalTimeInHours = totalTimeInSeconds / 3600
       const averageSpeed = totalTimeInHours > 0 ? (totalDistance / 1000) / totalTimeInHours : 0;
-      maxSpeed *= 3.6;
-
-      const caloriesBurned = calculateCalories(totalDistance);
 
       setMetrics({
         distance: totalDistance,
         averageSpeed,
         maxSpeed,
-        heatmap: gpsData.map(({ latitude, longitude }) => ({ latitude, longitude })),
-        sessionTime: totalTimeInSeconds,
+        heatmap: gpsData.filter(
+          ((seen) => (current) => {
+            const key = `${current.latitude}-${current.longitude}`;
+            if (seen.has(key)) {
+              return false;
+            }
+            seen.add(key);
+            return true;
+          })(new Set<string>())
+        ),
+        sessionTime: totalTimeInHours,
         caloriesBurned,
         abruptMovements,
         distanceHistory
