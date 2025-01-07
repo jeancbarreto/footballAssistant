@@ -16,6 +16,7 @@ type Metrics = {
   averageSpeed: number; // En km/h
   maxSpeed: number; // En km/h
   heatmap: { latitude: number; longitude: number }[]; // Coordenadas para el mapa de calor
+  routes: { coordinates: { latitude: number; longitude: number }[]; speed: number }[]
   sessionTime: number; // En segundos
   caloriesBurned: number; // En kcal
   abruptMovements: number; // Cantidad de movimientos bruscos
@@ -231,6 +232,7 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
       const rows = await getAllData(db);
 
       const gpsData: { latitude: number; longitude: number; timestamp: string }[] = [];
+      const routes: { coordinates: { latitude: number; longitude: number }[]; speed: number }[] = [];
       let totalDistance = 0;
       let maxSpeed = 0;
       let totalTimeInSeconds = 0;
@@ -293,6 +295,13 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
                 }
               }
 
+              routes.push({
+                coordinates: [
+                  { latitude: prev.latitude, longitude: prev.longitude },
+                  { latitude: current.latitude, longitude: current.longitude },
+                ],
+                speed,
+              });
               caloriesBurned += calculateCalories(totalDistance);
 
             }
@@ -317,6 +326,7 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
             return true;
           })(new Set<string>())
         ),
+        routes,
         sessionTime: totalTimeInHours,
         caloriesBurned,
         abruptMovements,
