@@ -4,10 +4,10 @@ export default ({ config }) => ({
   expo: {
     name: "sport-IQ",
     slug: "football-assistant",
-    version: "1.1.0",
+    version: "1.1.1",
     orientation: "portrait",
     icon: "./assets/images/sportiq-app.png",
-    scheme: "myapp",
+    scheme: "myapp-dev",
     jsEngine: "hermes",
     userInterfaceStyle: "automatic",
     permissions: [
@@ -56,6 +56,12 @@ export default ({ config }) => ({
       "expo-sqlite",
       "expo-build-properties",
       "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ],
     ],
     experiments: {
       typedRoutes: true,

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as Location from 'expo-location';
 import { Accelerometer, Gyroscope } from 'expo-sensors';
 import { openDatabase, initializeDatabase, saveData, getAllData, clearDatabase } from '../../database/sqlite';
+import * as TaskManager from 'expo-task-manager';
 import { KalmanFilter } from '../../utils/KalmanFilter';
 
 type SensorData = {
@@ -40,6 +41,8 @@ export const useSensorTracking = () => {
   const [elapsedTime, setElapsedTime] = useState<number>(0); // Estado del temporizador
   const [distanceHistory, setDistanceHistory] = useState<number[]>([]);
 
+  const LOCATION_TASK_NAME = 'background-location-task'
+
 const [sensorDataBuffer, setSensorDataBuffer] = useState<{
   latitude: number | null;
   longitude: number | null;
@@ -54,6 +57,65 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
   timestamp: null,
 });
 
+const requestPermissions = async () => {
+  const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+  if (foregroundStatus !== 'granted') {
+      alert('Permiso de ubicación en primer plano no otorgado');
+      return;
+  }
+
+  const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+  if (backgroundStatus !== 'granted') {
+      alert('Permiso de ubicación en segundo plano no otorgado');
+      return;
+  }
+
+  try {
+      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+          accuracy: Location.Accuracy.Balanced, // O High para mayor precisión
+          timeInterval: 1000, // Intervalo de 1 segundo
+          distanceInterval: 1, // Distancia mínima de 1 metro
+          foregroundService: {
+              notificationTitle: 'Football Assistant',
+              notificationBody: 'Grabando ubicación en segundo plano',
+          },
+      });
+      console.log('Actualizaciones de ubicación en segundo plano iniciadas');
+  } catch (error) {
+      console.error('Error al iniciar las actualizaciones de ubicación:', error);
+  }
+};
+
+useEffect(() => {
+  TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
+      if (error) {
+          console.error('Error en la tarea de ubicación:', error);
+          return;
+      }
+      if (data) {
+          const { locations } = data as { locations: Location.LocationObject[] };
+
+          if (locations && locations.length > 0) {
+              const { latitude, longitude } = locations[0].coords;
+              const timestamp = new Date().toISOString();
+
+              try {
+                  const database = await openDatabase();
+                  await initializeDatabase(database);
+
+                  const sensorData = { latitude, longitude, timestamp };
+                  await saveData(database, `sensor_${timestamp}`, sensorData);
+
+                  console.log('Datos guardados en segundo plano:', sensorData);
+              } catch (dbError) {
+                  console.error('Error guardando datos en la base de datos:', dbError);
+              }
+          }
+      }
+  });
+}, []);
+
+
   // Inicializar la base de datos al montar el hook
   useEffect(() => {
     (async () => {
@@ -61,6 +123,9 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
         const database = await openDatabase();
         await initializeDatabase(database);
         setDb(database);
+
+
+
       } catch (error) {
         console.error('Error initializing database:', error);
       }
@@ -132,20 +197,15 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
       return;
     }
 
-    // GPS Listener
+    requestPermissions();
+    
+
     const locSub = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.Highest, timeInterval: timeInterval, distanceInterval: 0.5 },
-      async (newLocation) => {
-        setLocation(newLocation.coords);
-        const timestamp = new Date().toISOString();
-        setSensorDataBuffer((prev) => ({
-          ...prev,
-          latitude: newLocation.coords.latitude,
-          longitude: newLocation.coords.longitude,
-          timestamp: timestamp,
-        }));
+      { accuracy: Location.Accuracy.High, timeInterval: 1000, distanceInterval: 1 },
+      (newLocation) => {
+          setLocation(newLocation.coords);
       }
-    );
+  );
     setLocationSubscription(locSub);
 
     // Accelerometer Listener
@@ -192,10 +252,8 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
 
   const stopTracking = async () => {
     try {
-      if (locationSubscription) {
-        locationSubscription.remove();
-        setLocationSubscription(null);
-      }
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+        console.log('Tracking detenido');
 
       if (accelerometerSubscription) {
         accelerometerSubscription.remove();
