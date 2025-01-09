@@ -26,6 +26,39 @@ type Metrics = {
 };
 
 const timeInterval = 1500; // Intervalo de tiempo para la actualización de la ubicación
+const LOCATION_TASK_NAME = 'background-location-task'
+
+const saveLocationData = async (
+  latitude: number,
+  longitude: number,
+  timestamp: string
+) => {
+  try {
+    const database = await openDatabase();
+    await initializeDatabase(database);
+    await saveData(database, `sensor_${timestamp}`, { latitude, longitude, timestamp });
+    console.log('Datos guardados:', { latitude, longitude, timestamp });
+  } catch (error) {
+    console.error('Error guardando datos:', error);
+  }
+};
+
+
+TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
+  if (error) {
+    console.error('Error en TaskManager:', error);
+    return;
+  }
+
+  if (data) {
+    const { locations } = data as { locations: Location.LocationObject[] };
+    if (locations && locations.length > 0) {
+      const { latitude, longitude } = locations[0].coords;
+      const timestamp = new Date().toISOString();
+      await saveLocationData(latitude, longitude, timestamp);
+    }
+  }
+});
 
 export const useSensorTracking = () => {
   const [isTracking, setIsTracking] = useState(false);
@@ -41,8 +74,6 @@ export const useSensorTracking = () => {
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0); // Estado del temporizador
   const [distanceHistory, setDistanceHistory] = useState<number[]>([]);
-
-  const LOCATION_TASK_NAME = 'background-location-task'
 
 const [sensorDataBuffer, setSensorDataBuffer] = useState<{
   latitude: number | null;
@@ -84,21 +115,6 @@ const requestPermissions = async () => {
       console.log('Actualizaciones de ubicación en segundo plano iniciadas');
   } catch (error) {
       console.error('Error al iniciar las actualizaciones de ubicación:', error);
-  }
-};
-
-const saveLocationData = async (
-  latitude: number,
-  longitude: number,
-  timestamp: string
-) => {
-  try {
-    const database = await openDatabase();
-    await initializeDatabase(database);
-    await saveData(database, `sensor_${timestamp}`, { latitude, longitude, timestamp });
-    console.log('Datos guardados:', { latitude, longitude, timestamp });
-  } catch (error) {
-    console.error('Error guardando datos:', error);
   }
 };
 
@@ -206,7 +222,7 @@ useEffect(() => {
       requestPermissions();
     } else if (AppState.currentState === 'active') {
       const locSub = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.Highest, timeInterval: timeInterval, distanceInterval: 0.5 },
+        { accuracy: Location.Accuracy.Highest, timeInterval: timeInterval, distanceInterval: 1 },
         async (newLocation) => {
           setLocation(newLocation.coords);
           const timestamp = new Date().toISOString();
