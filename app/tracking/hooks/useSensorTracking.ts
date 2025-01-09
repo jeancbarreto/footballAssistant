@@ -233,9 +233,8 @@ useEffect(() => {
       return;
     }
 
-    if (appState  === 'background') {
       requestPermissions();
-    } else if (appState === 'active') {
+   
       console.log('Iniciando seguimiento active');
       const locSub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Highest, timeInterval: timeInterval, distanceInterval: 1 },
@@ -251,7 +250,7 @@ useEffect(() => {
         }
       );
       setLocationSubscription(locSub);
-    }
+    
 
     // Accelerometer Listener
     Accelerometer.setUpdateInterval(timeInterval);
