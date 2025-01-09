@@ -75,7 +75,6 @@ export const useSensorTracking = () => {
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0); // Estado del temporizador
   const [distanceHistory, setDistanceHistory] = useState<number[]>([]);
-  const [backgroundPermissionStatus, requestBackgroundPermission] = Location.useBackgroundPermissions();
 
   const appState = useAppState();
 
@@ -125,9 +124,7 @@ const requestPermissions = async () => {
 };
 
 useEffect(() => {
-  if (appState === 'background') {
-    requestPermissions();
-  
+ 
 
   TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     if (error) {
@@ -144,6 +141,12 @@ useEffect(() => {
       }
     }
   });
+
+}, []);
+
+useEffect(() => {
+  if (appState === 'background') {
+ requestPermissions();
 }
 }, [appState]);
 
@@ -231,7 +234,6 @@ useEffect(() => {
     }
 
     if (appState  === 'background') {
-      console.log('Iniciando seguimiento background');
       requestPermissions();
     } else if (appState === 'active') {
       console.log('Iniciando seguimiento active');
