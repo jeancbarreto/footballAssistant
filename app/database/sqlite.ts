@@ -25,6 +25,7 @@ export const initializeDatabase = async (db: SQLite.SQLiteDatabase) => {
 export const saveData = async (db: SQLite.SQLiteDatabase, key: string, value: any) => {
   const jsonValue = JSON.stringify(value);
   await db.runAsync('INSERT OR REPLACE INTO json_store (key, value) VALUES (?, ?)', [key, jsonValue]);
+  console.log(`Data saved for key: ${jsonValue}`);
 };
 
 // Obtiene un objeto JSON

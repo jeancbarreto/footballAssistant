@@ -6,6 +6,7 @@ import { openDatabase, initializeDatabase, saveData, getAllData, clearDatabase }
 import * as TaskManager from 'expo-task-manager';
 import { AppState, AppStateStatus } from 'react-native';
 import { KalmanFilter } from '../../utils/KalmanFilter';
+import useAppState from './useAppState';
 
 type SensorData = {
   x: number;
@@ -74,6 +75,9 @@ export const useSensorTracking = () => {
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0); // Estado del temporizador
   const [distanceHistory, setDistanceHistory] = useState<number[]>([]);
+  const [backgroundPermissionStatus, requestBackgroundPermission] = Location.useBackgroundPermissions();
+
+  const appState = useAppState();
 
 const [sensorDataBuffer, setSensorDataBuffer] = useState<{
   latitude: number | null;
@@ -102,6 +106,8 @@ const requestPermissions = async () => {
       return;
   }
 
+  console.log(backgroundStatus);
+
   try {
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
           accuracy: Location.Accuracy.Highest, // O High para mayor precisión
@@ -119,6 +125,10 @@ const requestPermissions = async () => {
 };
 
 useEffect(() => {
+  if (appState === 'background') {
+    requestPermissions();
+  
+
   TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     if (error) {
       console.error('Error en TaskManager:', error);
@@ -134,7 +144,8 @@ useEffect(() => {
       }
     }
   });
-}, [AppState.currentState]);
+}
+}, [appState]);
 
 
   // Inicializar la base de datos al montar el hook
@@ -212,15 +223,18 @@ useEffect(() => {
       return;
     }
 
+
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       alert('Permission denied');
       return;
     }
 
-    if (AppState.currentState === 'background') {
+    if (appState  === 'background') {
+      console.log('Iniciando seguimiento background');
       requestPermissions();
-    } else if (AppState.currentState === 'active') {
+    } else if (appState === 'active') {
+      console.log('Iniciando seguimiento active');
       const locSub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Highest, timeInterval: timeInterval, distanceInterval: 1 },
         async (newLocation) => {
@@ -279,7 +293,7 @@ useEffect(() => {
 
   const stopTracking = async () => {
     try {
-      if (AppState.currentState === 'background') {
+      if (appState  === 'background') {
         await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
       }
 
