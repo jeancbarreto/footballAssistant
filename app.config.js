@@ -18,15 +18,15 @@ export default ({ config }) => ({
     ],
     newArchEnabled: true,
     ios: {
-        config: {
-          googleMapsApiKey: process.env.GOOGLE_IOS_API_KEY,
-        },
-        infoPlist: {
-          NSLocationWhenInUseUsageDescription: "This app needs access to your location to display maps and provide accurate tracking.",
-          NSLocationAlwaysUsageDescription: "This app needs access to your location in the background to track your activities.",
-          NSLocationAlwaysAndWhenInUseUsageDescription: "This app needs access to your location to provide seamless tracking.",
-        },
+      config: {
+        googleMapsApiKey: process.env.GOOGLE_IOS_API_KEY,
       },
+      infoPlist: {
+        NSLocationWhenInUseUsageDescription: "This app needs access to your location to display maps and provide accurate tracking.",
+        NSLocationAlwaysUsageDescription: "This app needs access to your location in the background to track your activities.",
+        NSLocationAlwaysAndWhenInUseUsageDescription: "This app needs access to your location to provide seamless tracking.",
+      },
+    },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/images/sportiq-app-bg.png",
@@ -56,26 +56,28 @@ export default ({ config }) => ({
         },
       ],
       "expo-sqlite",
-      "expo-build-properties",
-      {
-        "android": {
-          "compileSdkVersion": 33,
-          "targetSdkVersion": 33,
-          "minSdkVersion": 21,
-          "permissions": [
-            "ACCESS_FINE_LOCATION",
-            "ACCESS_COARSE_LOCATION",
-            "ACCESS_BACKGROUND_LOCATION",
-            "FOREGROUND_SERVICE"
-          ]
-        }
-      },
+      [
+        "expo-build-properties", // Este debe estar en un arreglo
+        {
+          android: {
+            compileSdkVersion: 33,
+            targetSdkVersion: 33,
+            minSdkVersion: 21,
+            permissions: [
+              "ACCESS_FINE_LOCATION",
+              "ACCESS_COARSE_LOCATION",
+              "ACCESS_BACKGROUND_LOCATION",
+              "FOREGROUND_SERVICE",
+            ],
+          },
+        },
+      ],
       "expo-secure-store",
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
-        }
+          locationAlwaysAndWhenInUsePermission: "Allow $(PRODUCT_NAME) to use your location.",
+        },
       ],
     ],
     experiments: {
