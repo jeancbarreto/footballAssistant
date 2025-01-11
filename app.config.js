@@ -12,9 +12,9 @@ export default ({ config }) => ({
     userInterfaceStyle: "automatic",
     permissions: [
       "ACCESS_FINE_LOCATION",
-    "ACCESS_COARSE_LOCATION",
-    "ACCESS_BACKGROUND_LOCATION",
-    "FOREGROUND_SERVICE",
+      "ACCESS_COARSE_LOCATION",
+      "ACCESS_BACKGROUND_LOCATION",
+      "FOREGROUND_SERVICE",
     ],
     newArchEnabled: true,
     ios: {
@@ -57,6 +57,19 @@ export default ({ config }) => ({
       ],
       "expo-sqlite",
       "expo-build-properties",
+      {
+        "android": {
+          "compileSdkVersion": 33,
+          "targetSdkVersion": 33,
+          "minSdkVersion": 21,
+          "permissions": [
+            "ACCESS_FINE_LOCATION",
+            "ACCESS_COARSE_LOCATION",
+            "ACCESS_BACKGROUND_LOCATION",
+            "FOREGROUND_SERVICE"
+          ]
+        }
+      },
       "expo-secure-store",
       [
         "expo-location",
