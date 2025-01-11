@@ -60,9 +60,6 @@ export default ({ config }) => ({
         "expo-build-properties", // Este debe estar en un arreglo
         {
           android: {
-            compileSdkVersion: 33,
-            targetSdkVersion: 33,
-            minSdkVersion: 21,
             permissions: [
               "ACCESS_FINE_LOCATION",
               "ACCESS_COARSE_LOCATION",
