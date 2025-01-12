@@ -1,20 +1,20 @@
 import 'dotenv/config';
 
-export default ({ config }) => ({
+export default () => ({
   expo: {
     name: "sport-IQ",
     slug: "football-assistant",
     version: "1.1.1",
     orientation: "portrait",
-    icon: "./assets/images/sportiq-app.png",
+    icon: "./assets/images/sportiqIcon.png",
     scheme: "myapp-dev",
     jsEngine: "hermes",
     userInterfaceStyle: "automatic",
     permissions: [
-      "ACCESS_FINE_LOCATION",
-      "ACCESS_COARSE_LOCATION",
       "ACCESS_BACKGROUND_LOCATION",
       "FOREGROUND_SERVICE",
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION",
     ],
     newArchEnabled: true,
     ios: {
@@ -29,7 +29,7 @@ export default ({ config }) => ({
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/images/sportiq-app-bg.png",
+        foregroundImage: "./assets/images/sportiqIcon.png",
         backgroundColor: "#4d7aae",
       },
       config: {
@@ -39,32 +39,18 @@ export default ({ config }) => ({
       },
       package: "com.jeancbarreto24.footballassistant",
     },
-    web: {
-      bundler: "metro",
-      output: "static",
-      favicon: "./assets/images/favicon.png",
-    },
     plugins: [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          image: "./assets/images/sportiq-app.png",
-          imageWidth: 200,
-          resizeMode: "contain",
-          backgroundColor: "#4d7aae",
-        },
-      ],
       "expo-sqlite",
       [
         "expo-build-properties", // Este debe estar en un arreglo
         {
           android: {
             permissions: [
-              "ACCESS_FINE_LOCATION",
-              "ACCESS_COARSE_LOCATION",
               "ACCESS_BACKGROUND_LOCATION",
               "FOREGROUND_SERVICE",
+              "ACCESS_FINE_LOCATION",
+              "ACCESS_COARSE_LOCATION",
             ],
           },
         },
@@ -74,8 +60,18 @@ export default ({ config }) => ({
         "expo-location",
         {
           locationAlwaysAndWhenInUsePermission: "Allow $(PRODUCT_NAME) to use your location.",
+          isAndroidBackgroundLocationEnabled: true,
+          isAndroidForegroundServiceEnabled: true,
         },
       ],
+      
+      [
+        "expo-asset",
+        {
+          "assets": ["./assets/images/sportiqIcon.png"]
+        }
+      ],
+      
     ],
     experiments: {
       typedRoutes: true,

@@ -105,7 +105,7 @@ const requestPermissions = async () => {
       return;
   }
 
-  console.log(backgroundStatus);
+  console.log('Permisos de ubicación otorgados', foregroundStatus, backgroundStatus);
 
   try {
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
@@ -124,8 +124,6 @@ const requestPermissions = async () => {
 };
 
 useEffect(() => {
- 
-
   TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     if (error) {
       console.error('Error en TaskManager:', error);
@@ -145,10 +143,8 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (appState === 'background') {
  requestPermissions();
-}
-}, [appState]);
+}, []);
 
 
   // Inicializar la base de datos al montar el hook
@@ -232,10 +228,6 @@ useEffect(() => {
       alert('Permission denied');
       return;
     }
-
-      requestPermissions();
-   
-      console.log('Iniciando seguimiento active');
       const locSub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.Highest, timeInterval: timeInterval, distanceInterval: 1 },
         async (newLocation) => {

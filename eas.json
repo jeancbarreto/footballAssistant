@@ -14,7 +14,13 @@
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "permissions": [
+          "ACCESS_FINE_LOCATION",
+          "ACCESS_COARSE_LOCATION",
+          "ACCESS_BACKGROUND_LOCATION",
+          "FOREGROUND_SERVICE"
+        ]
       },
       "env": {
         "GOOGLE_API_KEY": "@GOOGLE_API_KEY"
