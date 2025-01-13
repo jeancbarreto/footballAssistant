@@ -6,12 +6,12 @@ export default () => ({
     slug: "football-assistant",
     version: "1.1.1",
     orientation: "portrait",
-    icon: "./assets/images/sportiq-app.png",
+    icon: "./assets/images/sportiq_app.png",
     scheme: "myapp-dev",
     jsEngine: "hermes",
     userInterfaceStyle: "automatic",
     splash: {
-    "image": "./assets/images/sportiq-app.png"
+    "image": "./assets/images/sportiq_app.png"
   },
     permissions: [
       "ACCESS_BACKGROUND_LOCATION",
@@ -32,7 +32,7 @@ export default () => ({
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/images/sportiq-app.png",
+        foregroundImage: "./assets/images/sportiq_app.png",
         backgroundColor: "#4d7aae",
       },
       config: {
@@ -71,7 +71,7 @@ export default () => ({
       [
         "expo-asset",
         {
-          "assets": ["./assets/images/sportiq-app.png"]
+          "assets": ["./assets/images/sportiq_app.png"]
         }
       ],
       
