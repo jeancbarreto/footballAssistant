@@ -12,7 +12,7 @@ export default () => ({
     userInterfaceStyle: "automatic",
     splash: {
     "image": "./assets/sportiq-app.png"
-  }
+  },
     permissions: [
       "ACCESS_BACKGROUND_LOCATION",
       "FOREGROUND_SERVICE",
