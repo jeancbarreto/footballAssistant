@@ -6,7 +6,7 @@ export default () => ({
     slug: "football-assistant",
     version: "1.1.1",
     orientation: "portrait",
-    icon: "./assets/images/sportiqadaptative.png",
+    icon: "./assets/images/sportiqa.png",
     scheme: "myapp-dev",
     jsEngine: "hermes",
     userInterfaceStyle: "automatic",
@@ -29,7 +29,7 @@ export default () => ({
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/images/sportiqadaptative.png",
+        foregroundImage: "./assets/images/sportiq.png",
         backgroundColor: "#4d7aae",
       },
       config: {
