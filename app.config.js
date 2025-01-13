@@ -11,7 +11,7 @@ export default () => ({
     jsEngine: "hermes",
     userInterfaceStyle: "automatic",
     splash: {
-    "image": "./assets/sportiq-app.png"
+    "image": "./assets/images/sportiq-app.png"
   },
     permissions: [
       "ACCESS_BACKGROUND_LOCATION",
