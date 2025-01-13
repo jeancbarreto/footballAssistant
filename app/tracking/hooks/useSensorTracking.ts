@@ -44,22 +44,24 @@ const saveLocationData = async (
   }
 };
 
-
-TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
-  if (error) {
-    console.error('Error en TaskManager:', error);
-    return;
-  }
-
-  if (data) {
-    const { locations } = data as { locations: Location.LocationObject[] };
-    if (locations && locations.length > 0) {
-      const { latitude, longitude } = locations[0].coords;
-      const timestamp = new Date().toISOString();
-      await saveLocationData(latitude, longitude, timestamp);
+const TaskManagerActive = () => {
+  TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
+    if (error) {
+      console.error('Error en TaskManager:', error);
+      return;
     }
-  }
-});
+  
+    if (data) {
+      const { locations } = data as { locations: Location.LocationObject[] };
+      if (locations && locations.length > 0) {
+        const { latitude, longitude } = locations[0].coords;
+        const timestamp = new Date().toISOString();
+        await saveLocationData(latitude, longitude, timestamp);
+      }
+    }
+  });
+}
+
 
 export const useSensorTracking = () => {
   const [isTracking, setIsTracking] = useState(false);
@@ -92,61 +94,6 @@ const [sensorDataBuffer, setSensorDataBuffer] = useState<{
   timestamp: null,
 });
 
-const requestPermissions = async () => {
-  const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-  if (foregroundStatus !== 'granted') {
-      alert('Permiso de ubicación en primer plano no otorgado');
-      return;
-  }
-
-  const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-  if (backgroundStatus !== 'granted') {
-      alert('Permiso de ubicación en segundo plano no otorgado');
-      return;
-  }
-
-  console.log('Permisos de ubicación otorgados', foregroundStatus, backgroundStatus);
-
-  try {
-      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-          accuracy: Location.Accuracy.Highest, // O High para mayor precisión
-          timeInterval: timeInterval, // Intervalo de 1 segundo
-          distanceInterval: 1, // Distancia mínima de 1 metro
-          foregroundService: {
-              notificationTitle: 'Football Assistant',
-              notificationBody: 'Grabando ubicación en segundo plano',
-          },
-      });
-      console.log('Actualizaciones de ubicación en segundo plano iniciadas');
-  } catch (error) {
-      console.error('Error al iniciar las actualizaciones de ubicación:', error);
-  }
-};
-
-useEffect(() => {
-  TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
-    if (error) {
-      console.error('Error en TaskManager:', error);
-      return;
-    }
-  
-    if (data) {
-      const { locations } = data as { locations: Location.LocationObject[] };
-      if (locations && locations.length > 0) {
-        const { latitude, longitude } = locations[0].coords;
-        const timestamp = new Date().toISOString();
-        await saveLocationData(latitude, longitude, timestamp);
-      }
-    }
-  });
-
-}, []);
-
-useEffect(() => {
- requestPermissions();
-}, []);
-
-
   // Inicializar la base de datos al montar el hook
   useEffect(() => {
     (async () => {
@@ -154,8 +101,6 @@ useEffect(() => {
         const database = await openDatabase();
         await initializeDatabase(database);
         setDb(database);
-
-
 
       } catch (error) {
         console.error('Error initializing database:', error);
@@ -222,6 +167,8 @@ useEffect(() => {
       return;
     }
 
+    TaskManagerActive();
+
 
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -286,14 +233,19 @@ useEffect(() => {
 
   const stopTracking = async () => {
     try {
-      if (appState  === 'background') {
+      const isTaskRunning = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+      if (isTaskRunning) {
+        console.log('Deteniendo actualizaciones de ubicación en segundo plano');
         await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      } else {
+        console.log('La tarea de ubicación ya estaba detenida');
       }
 
       if (locationSubscription) {
         locationSubscription.remove();
-        setLocationSubscription(null);
+        
       }
+      setLocationSubscription(null);
 
       if (accelerometerSubscription) {
         accelerometerSubscription.remove();
